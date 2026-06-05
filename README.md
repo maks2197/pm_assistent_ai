@@ -1,33 +1,13 @@
 Архитектура
 plain
 pm-assistant/
+docker-compose.yml      # PostgreSQL + Redis + Backend + Celery + Nginx
 
-├── docker-compose.yml      # PostgreSQL + Redis + Backend + Celery + Nginx
-
-├── backend/
-
-│   ├── app/
-
-│   │   ├── main.py         # FastAPI + Telegram webhook
-│   │   ├── telegram_bot.py # 14 команд бота
-│   │   ├── nlp_engine.py   # GPT-4o-mini + fallback regex
-│   │   ├── kanban_service.py # YouGile API v2 + mock fallback
-│   │   ├── meeting_service.py # Симуляция встреч + Whisper
-│   │   ├── reminder_service.py # Дедлайны, просрочки, статусы
-│   │   ├── evening_sync.py   # Вечерние отчёты, проверка стриков
-│   │   ├── gamification.py   # 12 достижений, 8 уровней, таблица лидеров
-│   │   └── knowledge_base.py # База знаний из встреч и чатов
-│   └── alembic/            # Миграции БД
-├── nginx/                  # Reverse proxy
-├── scripts/
-│   ├── deploy.sh           # Деплой на сервер
-│   └── test.sh             # Проверка работоспособности
-└── quickstart.sh           # Быстрый старт
 Ключевые фичи
 Table
 Функция	Реализация
 Автозадачи из чата	NLP через OpenAI + fallback regex
-Встречи	Симуляция Yandex Telemost с генерацией саммари
+Встречи пока Симуляция Yandex Telemost с генерацией саммари
 Канбан	YouGile API v2 + mock-режим для демо
 Напоминания	Celery beat, проверка каждые 5 мин
 Вечерняя сводка	Проверка отчётов, теги пропустивших
@@ -97,23 +77,20 @@ pm-assistant/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py         # FastAPI + webhook handler
-│   │   ├── telegram_bot.py # Bot logic & commands
-│   │   ├── nlp_engine.py   # OpenAI GPT-4o-mini NLP
-│   │   ├── kanban_service.py # YouGile API integration
-│   │   ├── meeting_service.py # Yandex Telemost + Whisper
-│   │   ├── reminder_service.py # Proactive reminders
-│   │   ├── evening_sync.py   # Daily reports sync
-│   │   ├── gamification.py   # RPG system & achievements
-│   │   └── knowledge_base.py # Team wiki from meetings
+│   │   ├── telegram_bot.py # Bot logic & commands 14 команд бота
+│   │   ├── nlp_engine.py   # OpenAI GPT-4o-mini NLP  + fallback regex
+│   │   ├── kanban_service.py # YouGile API integration + mock fallback - YouGile API v2 
+│   │   ├── meeting_service.py # Yandex Telemost + Whisper - Симуляция встреч + Whisper
+│   │   ├── reminder_service.py # Proactive reminders  -  Дедлайны, просрочки, статусы
+│   │   ├── evening_sync.py   # Daily reports sync -Вечерние отчёты, проверка стриков
+│   │   ├── gamification.py   # RPG system & achievements - 12 достижений, 8 уровней, таблица лидеров
+│   │   └── knowledge_base.py # Team wiki from meetings  -  База знаний из встреч и чатов
 │   ├── Dockerfile
 │   └── requirements.txt
 ├── nginx/
 │   └── nginx.conf
 └── scripts/
     └── deploy.sh
-```
-
-## Funkcional
 
 ### Osnovnoj (obyazatel'nyj)
 1. **Telegram** - Bot chitaet perepisku, izvlekaet zadachi, dedlajny, otvetstvennykh

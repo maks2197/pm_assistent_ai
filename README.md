@@ -5,7 +5,9 @@ pm-assistant/
 ├── docker-compose.yml      # PostgreSQL + Redis + Backend + Celery + Nginx
 
 ├── backend/
+
 │   ├── app/
+
 │   │   ├── main.py         # FastAPI + Telegram webhook
 │   │   ├── telegram_bot.py # 14 команд бота
 │   │   ├── nlp_engine.py   # GPT-4o-mini + fallback regex

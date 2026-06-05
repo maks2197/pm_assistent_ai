@@ -1,3 +1,69 @@
+Архитектура
+plain
+pm-assistant/
+├── docker-compose.yml      # PostgreSQL + Redis + Backend + Celery + Nginx
+├── backend/
+│   ├── app/
+│   │   ├── main.py         # FastAPI + Telegram webhook
+│   │   ├── telegram_bot.py # 14 команд бота
+│   │   ├── nlp_engine.py   # GPT-4o-mini + fallback regex
+│   │   ├── kanban_service.py # YouGile API v2 + mock fallback
+│   │   ├── meeting_service.py # Симуляция встреч + Whisper
+│   │   ├── reminder_service.py # Дедлайны, просрочки, статусы
+│   │   ├── evening_sync.py   # Вечерние отчёты, проверка стриков
+│   │   ├── gamification.py   # 12 достижений, 8 уровней, таблица лидеров
+│   │   └── knowledge_base.py # База знаний из встреч и чатов
+│   └── alembic/            # Миграции БД
+├── nginx/                  # Reverse proxy
+├── scripts/
+│   ├── deploy.sh           # Деплой на сервер
+│   └── test.sh             # Проверка работоспособности
+└── quickstart.sh           # Быстрый старт
+Ключевые фичи
+Table
+Функция	Реализация
+Автозадачи из чата	NLP через OpenAI + fallback regex
+Встречи	Симуляция Yandex Telemost с генерацией саммари
+Канбан	YouGile API v2 + mock-режим для демо
+Напоминания	Celery beat, проверка каждые 5 мин
+Вечерняя сводка	Проверка отчётов, теги пропустивших
+Геймификация	12 ачивок, 8 уровней, XP, стрик
+База знаний	Автоизвлечение решений из встреч
+Деплой за 3 шага
+bash
+# 1. Распаковать на сервере
+unzip pm-assistant.zip && cd pm-assistant
+
+# 2. Настроить .env (минимум: TELEGRAM_BOT_TOKEN)
+cp .env.example .env
+nano .env
+
+# 3. Запустить
+./quickstart.sh
+Минимальная конфигурация для хакатона
+В .env достаточно:
+plain
+TELEGRAM_BOT_TOKEN=123456:ABC-DEF... (от @BotFather)
+OPENAI_API_KEY=sk-... (опционально, есть regex fallback)
+
+Без OpenAI бот работает через regex-извлечение задач. Без YouGile — через mock-канбан.
+Демо-сценарий для презентации
+Добавить бота в тестовый чат
+Написать: "Нужно сделать рефакторинг БД до пятницы, @ivan"
+Бот автоматически создаёт задачу в канбане
+Команда пишет /meeting
+Бот симулирует встречу, генерирует саммари и задачи
+Вечером каждый пишет /report Сделал тесты и документацию
+Бот проверяет отчёты и шлёт сводку
+Технологический стек
+Python 3.12 + FastAPI + aiogram 3.x
+PostgreSQL 15 + SQLAlchemy 2.0 (async)
+Redis + Celery (фоновые задачи)
+OpenAI GPT-4o-mini (NLP) / Whisper (распознавание речи)
+YouGile API v2 (канбан)
+Docker Compose (деплой)
+
+
 # PM Assistant - AI Project Manager Bot
 
 AI-assistent dlya komandnoj raboty: avtomaticheski sozdayet zadachi iz chata, slushayet vstrechi, vedet kanban i napominayet o dedlajnakh.

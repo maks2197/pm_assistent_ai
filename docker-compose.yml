@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER:-pmassistant}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+      POSTGRES_DB: ${DB_NAME:-pmassistant}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./data/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pmassistant"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER:-pmassistant}:${DB_PASSWORD:-secret}@db:5432/${DB_NAME:-pmassistant}
+      - REDIS_URL=redis://redis:6379/0
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_WEBHOOK_URL=${TELEGRAM_WEBHOOK_URL}
+      - YOUGILE_API_KEY=${YOUGILE_API_KEY}
+      - YOUGILE_BOARD_ID=${YOUGILE_BOARD_ID}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - YANDEX_SPEECHKIT_API_KEY=${YANDEX_SPEECHKIT_API_KEY}
+      - SECRET_KEY=${SECRET_KEY:-supersecret}
+      - ENV=${ENV:-production}
+    volumes:
+      - ./data:/app/data
+      - ./backend/app:/app/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  celery_worker:
+    build: ./backend
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER:-pmassistant}:${DB_PASSWORD:-secret}@db:5432/${DB_NAME:-pmassistant}
+      - REDIS_URL=redis://redis:6379/0
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - YOUGILE_API_KEY=${YOUGILE_API_KEY}
+      - YOUGILE_BOARD_ID=${YOUGILE_BOARD_ID}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SECRET_KEY=${SECRET_KEY:-supersecret}
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+    command: celery -A app.celery_app worker --loglevel=info
+
+  celery_beat:
+    build: ./backend
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER:-pmassistant}:${DB_PASSWORD:-secret}@db:5432/${DB_NAME:-pmassistant}
+      - REDIS_URL=redis://redis:6379/0
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - YOUGILE_API_KEY=${YOUGILE_API_KEY}
+      - YOUGILE_BOARD_ID=${YOUGILE_BOARD_ID}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SECRET_KEY=${SECRET_KEY:-supersecret}
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+    command: celery -A app.celery_app beat --loglevel=info
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

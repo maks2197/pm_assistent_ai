@@ -1,7 +1,9 @@
 Архитектура
 plain
 pm-assistant/
+
 ├── docker-compose.yml      # PostgreSQL + Redis + Backend + Celery + Nginx
+
 ├── backend/
 │   ├── app/
 │   │   ├── main.py         # FastAPI + Telegram webhook
